@@ -161,7 +161,11 @@ def main():
             if editor_label.lower() not in state.lower():
                 state += f" - {editor_label}"
         else:
-            state = f"Editing... - {editor_label}"
+            if editor_label == "KiCad":
+                details = None
+                state = "Idling..."
+            else:
+                state = f"Editing... - {editor_label}"
 
         payload = (details, state, large_image, editor_label)
 
@@ -170,15 +174,17 @@ def main():
 
         if should_update:
             try:
-                rpc.update(
-                    details=details,
-                    state=state,
-                    large_image=large_image,
-                    large_text=editor_label,
-                    small_image=SMALL_IMAGE,
-                    small_text="KiCad Presence",
-                    start=session_start,
-                )
+                update_kwargs = {
+                    "state": state,
+                    "large_image": large_image,
+                    "large_text": editor_label,
+                    "small_image": SMALL_IMAGE,
+                    "small_text": "KiCad Presence",
+                    "start": session_start,
+                }
+                if details is not None:
+                    update_kwargs["details"] = details
+                rpc.update(**update_kwargs)
                 last_payload = payload
                 last_update_ts = now
             except Exception:
