@@ -1,23 +1,21 @@
-import re
+﻿import re
 import time
+
 import psutil
 from pypresence import Presence
-
 import win32gui
 import win32process
 
 # ------------------- CONFIG -------------------
 DISCORD_CLIENT_ID = "1473099831051423887"
-POLL_SECONDS = 2  # gyorsabb váltás
-
+POLL_SECONDS = 2
 DEBUG = True
-
 
 # Discord Developer Portal -> Rich Presence -> Art Assets keys
 SMALL_IMAGE = "kicad_small"
 LARGE_PCB_IMAGE = "pcb_editor"
 LARGE_SCH_IMAGE = "schematic_editor"
-LARGE_PM_IMAGE = "pcb_editor"  # ha akarsz külön project manager képet, csinálj assetet és írd át
+LARGE_PM_IMAGE = "pcb_editor"
 # ---------------------------------------------
 
 TARGET_PROCS = {
@@ -29,6 +27,8 @@ TARGET_PROCS = {
 }
 
 FILE_REGEX = re.compile(r"([A-Za-z0-9_\- .()]+)\.(kicad_pcb|kicad_sch|sch)\b", re.IGNORECASE)
+DASH_SPLIT_REGEX = re.compile(r"\s+[\u2012-\u2015-]\s+")
+EDITOR_SUFFIX_REGEX = re.compile(r"\s*[\u2012-\u2015-]\s*(PCB Editor|Schematic Editor)\s*$", re.IGNORECASE)
 
 
 def connect_discord(client_id: str) -> Presence:
@@ -65,30 +65,41 @@ def get_foreground_kicad_window():
 
     try:
         _, pid = win32process.GetWindowThreadProcessId(hwnd)
-        title = win32gui.GetWindowText(hwnd) or ""
-        title = title.strip()
+        title = (win32gui.GetWindowText(hwnd) or "").strip()
     except Exception:
         return None, None
 
     try:
-        p = psutil.Process(pid)
-        proc_name = (p.name() or "").lower()
+        proc_name = (psutil.Process(pid).name() or "").lower()
     except Exception:
         return None, None
 
     if proc_name not in TARGET_PROCS:
         return None, None
 
-    # KiCad ablak, de lehet üres title; akkor is visszaadjuk
     return title, proc_name
 
 
-def pick_editor_and_file_from_title(title: str):
-    tl = (title or "").lower()
+def sanitize_file_label(value: str | None) -> str | None:
+    if not value:
+        return None
 
-    # STRICT detection first (do NOT match random "pcb" in project names)
-    is_pcb = (".kicad_pcb" in tl) or ("pcb editor" in tl) or ("pcbnew" in tl)
-    is_sch = (".kicad_sch" in tl) or (re.search(r"\.sch\b", tl) is not None) or ("schematic editor" in tl) or ("eeschema" in tl)
+    cleaned = EDITOR_SUFFIX_REGEX.sub("", value).strip()
+    return cleaned or None
+
+
+def pick_editor_and_file_from_title(title: str, proc_name: str | None = None):
+    tl = (title or "").lower()
+    proc = (proc_name or "").lower()
+
+    is_pcb = (".kicad_pcb" in tl) or ("pcb editor" in tl) or ("pcbnew" in tl) or (proc in {"pcbnew.exe", "kicad-pcbnew.exe"})
+    is_sch = (
+        (".kicad_sch" in tl)
+        or (re.search(r"\.sch\b", tl) is not None)
+        or ("schematic editor" in tl)
+        or ("eeschema" in tl)
+        or (proc in {"eeschema.exe", "kicad-eeschema.exe"})
+    )
 
     if is_pcb and not is_sch:
         editor_label = "PCB Editor"
@@ -97,44 +108,22 @@ def pick_editor_and_file_from_title(title: str):
         editor_label = "Schematic Editor"
         large_image = LARGE_SCH_IMAGE
     else:
-        # ambiguous / project manager
         editor_label = "KiCad"
         large_image = LARGE_PM_IMAGE
 
-    # filename
     file_or_project = None
     m = FILE_REGEX.search(title or "")
     if m:
         file_or_project = f"{m.group(1)}.{m.group(2)}"
     else:
-    # KiCad gyakran "—" (em dash) elválasztót használ, nem sima "-"
-        chunks = re.split(r"\s+[—-]\s+", title or "")
+        chunks = DASH_SPLIT_REGEX.split(title or "")
         if chunks and chunks[0].strip():
             candidate = chunks[0].strip()
-
-            # Ha a candidate végén ott maradt az editor neve, szedd le
-            candidate = re.sub(
-                r"\s*[—-]\s*(PCB Editor|Schematic Editor)\s*$",
-                "",
-                candidate,
-                flags=re.IGNORECASE,
-            ).strip()
-
             if len(candidate) <= 80:
                 file_or_project = candidate
 
-
-    if file_or_project:
-        # Remove editor suffix if it leaked into the extracted name
-        file_or_project = re.sub(
-            r"\s*[—-]\s*(PCB Editor|Schematic Editor)\s*$",
-            "",
-            file_or_project,
-            flags=re.IGNORECASE,
-        ).strip()
-
+    file_or_project = sanitize_file_label(file_or_project)
     return editor_label, large_image, file_or_project
-
 
 
 def main():
@@ -142,10 +131,9 @@ def main():
 
     session_start = None
     last_payload = None
-    last_update_ts = 0
+    last_update_ts = 0.0
 
     while True:
-        # Only show presence if KiCad is running at all
         if not any_kicad_running():
             session_start = None
             if last_payload is not None:
@@ -160,26 +148,19 @@ def main():
         if session_start is None:
             session_start = int(time.time())
 
-        # Prefer the currently focused KiCad window
         title, proc_name = get_foreground_kicad_window()
 
-        # If focus is not on KiCad (e.g., you're in Discord/Browser),
-        # we still keep presence but fall back to a generic label.
         if title is None:
-            editor_label = "KiCad"
-            large_image = LARGE_PM_IMAGE
-            file_or_project = None
+            editor_label, large_image, file_or_project = "KiCad", LARGE_PM_IMAGE, None
         else:
-            editor_label, large_image, file_or_project = pick_editor_and_file_from_title(title)
+            editor_label, large_image, file_or_project = pick_editor_and_file_from_title(title, proc_name)
 
-        details = ""
-        if editor_label == "KiCad":
-            state = "Idling..."
-        elif file_or_project:
-            details = "Cooking..."
+        details = "Cooking..."
+        if file_or_project:
             state = f"Editing: {file_or_project}"
+            if editor_label.lower() not in state.lower():
+                state += f" - {editor_label}"
         else:
-            details = "Cooking..."
             state = f"Editing... - {editor_label}"
 
         payload = (details, state, large_image, editor_label)
@@ -201,7 +182,6 @@ def main():
                 last_payload = payload
                 last_update_ts = now
             except Exception:
-                # reconnect if Discord restarted
                 try:
                     rpc = connect_discord(DISCORD_CLIENT_ID)
                 except Exception:

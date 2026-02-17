@@ -1,29 +1,46 @@
 # KiCad Discord Presence
 
-KiCad Discord Rich Presence client for Windows. It runs silently in the background and updates Discord activity while KiCad is open.
+Show your KiCad work in Discord Rich Presence.  
+The app runs quietly in the background on Windows and updates your activity while KiCad is open.
 
-## Requirements
+## ✨ Features
 
-- Windows
-- Discord desktop app running
-- Discord Activity Privacy enabled for activity sharing
+- 🎯 Detects when KiCad is running
+- 🧩 Detects active editor from the focused KiCad window:
+- `PCB Editor`
+- `Schematic Editor`
+- 📝 Shows editing status like: `Editing: <file> - <editor>`
+- 💤 Falls back to a generic KiCad state when not in an editor window
+- 🖼️ Uses different Discord artwork for PCB vs Schematic editor
+- 🚀 Auto-starts with Windows (current user)
 
-## Install
+## ✅ Requirements
 
-1. Go to **Releases**.
+- 🪟 Windows
+- 💬 Discord desktop app running
+- 🔓 Discord Activity Privacy enabled (so activity can be shown)
+
+## 📦 Install
+
+1. Open **Releases**.
 2. Download `KiCadDiscordPresence-Setup.exe`.
 3. Run the installer.
 
-The app installs to `%LOCALAPPDATA%\KiCadPresence` and auto-starts at logon for the current user.
+Installed path: `%LOCALAPPDATA%\KiCadPresence`  
+Auto-start entry: `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`
 
-## Uninstall
+## 🗑️ Uninstall
 
 - Use Windows **Apps & Features**, or
 - Run the uninstaller from `%LOCALAPPDATA%\KiCadPresence`.
 
-Uninstall removes app files and the autostart entry.
+Uninstall removes:
+- App files
+- Auto-start registry entry
+- Running `KiCadPresence.exe` process (automatically)
 
-## Troubleshooting
+## 🛠️ Troubleshooting
 
 - If VS Code activity overrides KiCad status, disable VS Code in Discord **Registered Games**.
-- If Discord activity is not shown, verify Discord **Activity Privacy** settings are enabled.
+- If activity is not shown, check Discord **Activity Privacy** settings.
+- If Discord was started after this app, restart `KiCadPresence` once.

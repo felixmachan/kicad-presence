@@ -39,5 +39,8 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: 
 [Run]
 Filename: "{app}\KiCadPresence.exe"; Description: "Launch KiCad Discord Presence"; Flags: nowait postinstall skipifsilent
 
+[UninstallRun]
+Filename: "{sys}\taskkill.exe"; Parameters: "/F /T /IM KiCadPresence.exe"; Flags: runhidden skipifdoesntexist
+
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}"
