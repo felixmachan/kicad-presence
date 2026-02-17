@@ -1,9 +1,11 @@
-# KiCad Discord Presence
+﻿# KiCad Discord Presence
 
 Show your KiCad work in Discord Rich Presence.  
 The app runs quietly in the background on Windows and updates your activity while KiCad is open.
 
 ## ✨ Features
+
+![KiCad Presence Hero](kicad-presence-hero.png)
 
 - 🎯 Detects when KiCad is running
 - 🧩 Detects active editor from the focused KiCad window:
