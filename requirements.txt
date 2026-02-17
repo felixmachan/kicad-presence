@@ -1,0 +1,4 @@
+pypresence
+psutil
+pywin32
+pyinstaller
