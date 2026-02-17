@@ -27,7 +27,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Build onefile executable
-        run: pyinstaller --onefile --noconsole --name KiCadPresence kicad-presence.py
+        run: pyinstaller --onefile --noconsole --icon=installer/assets/setup.ico --name KiCadPresence kicad-presence.py
 
       - name: Install Inno Setup
         run: choco install innosetup --no-progress -y

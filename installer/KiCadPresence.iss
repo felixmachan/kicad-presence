@@ -8,18 +8,24 @@
 AppId={{7F98F95B-CC17-4A73-8A4A-EA2344E65AB9}}
 AppName=KiCad Discord Presence
 AppVersion={#MyAppVersion}
-AppPublisher=KiCad Presence
+AppPublisher=Felix Machan
+AppPublisherURL=https://github.com/felixmachan/kicad-presence
+AppSupportURL=https://github.com/felixmachan/kicad-presence/issues
+AppUpdatesURL=https://github.com/felixmachan/kicad-presence/releases
 DefaultDirName={localappdata}\KiCadPresence
 DefaultGroupName=KiCad Discord Presence
 DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
-PrivilegesRequiredOverridesAllowed=dialog
 OutputDir=..\dist\installer
 OutputBaseFilename=KiCadDiscordPresence-Setup
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
 UninstallDisplayIcon={app}\KiCadPresence.exe
+SetupIconFile=assets\setup.ico
+WizardImageFile=assets\wizard.bmp
+WizardSmallImageFile=assets\wizard-small.bmp
+
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -29,9 +35,6 @@ Source: "..\dist\KiCadPresence.exe"; DestDir: "{app}"; DestName: "KiCadPresence.
 
 [Registry]
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "KiCadPresence"; ValueData: """{app}\KiCadPresence.exe"""; Flags: uninsdeletevalue
-
-[Icons]
-Name: "{autoprograms}\KiCad Discord Presence"; Filename: "{app}\KiCadPresence.exe"
 
 [Run]
 Filename: "{app}\KiCadPresence.exe"; Description: "Launch KiCad Discord Presence"; Flags: nowait postinstall skipifsilent
