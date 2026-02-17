@@ -5,7 +5,7 @@
 #endif
 
 [Setup]
-AppId={7F98F95B-CC17-4A73-8A4A-EA2344E65AB9}
+AppId={{7F98F95B-CC17-4A73-8A4A-EA2344E65AB9}}
 AppName=KiCad Discord Presence
 AppVersion={#MyAppVersion}
 AppPublisher=KiCad Presence
