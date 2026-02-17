@@ -107,11 +107,31 @@ def pick_editor_and_file_from_title(title: str):
     if m:
         file_or_project = f"{m.group(1)}.{m.group(2)}"
     else:
-        chunks = re.split(r"\s+-\s+", title or "")
+    # KiCad gyakran "—" (em dash) elválasztót használ, nem sima "-"
+        chunks = re.split(r"\s+[—-]\s+", title or "")
         if chunks and chunks[0].strip():
             candidate = chunks[0].strip()
+
+            # Ha a candidate végén ott maradt az editor neve, szedd le
+            candidate = re.sub(
+                r"\s*[—-]\s*(PCB Editor|Schematic Editor)\s*$",
+                "",
+                candidate,
+                flags=re.IGNORECASE,
+            ).strip()
+
             if len(candidate) <= 80:
                 file_or_project = candidate
+
+
+    if file_or_project:
+        # Remove editor suffix if it leaked into the extracted name
+        file_or_project = re.sub(
+            r"\s*[—-]\s*(PCB Editor|Schematic Editor)\s*$",
+            "",
+            file_or_project,
+            flags=re.IGNORECASE,
+        ).strip()
 
     return editor_label, large_image, file_or_project
 
@@ -152,11 +172,15 @@ def main():
         else:
             editor_label, large_image, file_or_project = pick_editor_and_file_from_title(title)
 
-        details = "Cooking..."
-        if file_or_project:
-            state = f"Editing: {file_or_project} - {editor_label}"
+        details = ""
+        if editor_label == "KiCad":
+            state = "Idling..."
+        elif file_or_project:
+            details = "Cooking..."
+            state = f"Editing: {file_or_project}"
         else:
-            state = f"Editing… - {editor_label}"
+            details = "Cooking..."
+            state = f"Editing... - {editor_label}"
 
         payload = (details, state, large_image, editor_label)
 
